@@ -2,10 +2,10 @@ import * as fs from 'fs';
 import * as path from 'path';
 import type { McpResult, McpServerInfo } from '../types.js';
 
-// Average tokens per MCP tool definition (name + description + parameter schema)
-const TOKENS_PER_TOOL = 300;
-// Tokens for a deferred/ToolSearch tool (just the name, no schema)
+// Tokens for a deferred tool (just the name listed in system-reminder, no schema)
 const TOKENS_PER_DEFERRED_TOOL = 15;
+// Tokens when a tool is fetched via ToolSearch (full schema loaded on demand)
+const TOKENS_PER_FETCHED_TOOL = 300;
 
 interface McpConfig {
   mcpServers?: Record<string, { command?: string; args?: string[]; env?: Record<string, string> }>;
@@ -51,11 +51,17 @@ const KNOWN_SERVERS: Record<string, number> = {
 
 /**
  * Scan MCP server configurations from .mcp.json and settings.json files.
- * Estimates token overhead based on tool count heuristics.
+ *
+ * ToolSearch is ON by default in Claude Code. When tool-token count crosses
+ * a threshold, tools are automatically deferred (only names listed in the
+ * system prompt, full schemas fetched on demand via ToolSearch).
+ *
+ * This scanner reports the deferred (name-only) cost as the per-turn overhead,
+ * and the on-fetch cost for when tools are actually invoked.
  */
 export function scanMcp(projectPath: string): McpResult {
+  // Credentials in .mcp.json stay in local vars, intentionally excluded from output
   const allMcpServers: Record<string, { command?: string; args?: string[] }> = {};
-  const allowedTools = new Set<string>();
 
   const home = process.env.HOME || process.env.USERPROFILE || '';
 
@@ -75,7 +81,7 @@ export function scanMcp(projectPath: string): McpResult {
     }
   }
 
-  // 2. Read settings.json for MCP servers defined there + allowed tools
+  // 2. Read settings.json for MCP servers defined there
   const settingsPaths = [
     path.join(projectPath, '.claude', 'settings.json'),
     path.join(projectPath, '.claude', 'settings.local.json'),
@@ -91,15 +97,11 @@ export function scanMcp(projectPath: string): McpResult {
     if (settings.mcpServers) {
       Object.assign(allMcpServers, settings.mcpServers);
     }
-    if (settings.permissions?.allow) {
-      for (const t of settings.permissions.allow) allowedTools.add(t);
-    }
-    if (settings.allowedTools) {
-      for (const t of settings.allowedTools) allowedTools.add(t);
-    }
   }
 
   // 3. Build server info
+  // ToolSearch is on by default: all MCP tools are deferred (name-only in system prompt).
+  // Full schemas are fetched on demand when Claude decides to use a tool.
   const servers: McpServerInfo[] = [];
 
   for (const [name, config] of Object.entries(allMcpServers)) {
@@ -119,31 +121,20 @@ export function scanMcp(projectPath: string): McpResult {
       }
     }
 
-    // Check deferred status from allowed tools
-    const mcpPrefix = `mcp__${name}__`;
-    const hasWildcard = allowedTools.has(`${mcpPrefix}*`) || allowedTools.has('*:**');
-    const specificAllowed = [...allowedTools].filter(t => t.startsWith(mcpPrefix) && !t.includes('*'));
-
-    const alwaysLoaded = hasWildcard ? toolCount : specificAllowed.length;
-    const deferred = Math.max(0, toolCount - alwaysLoaded);
-
-    const estimatedTokens = (alwaysLoaded * TOKENS_PER_TOOL) + (deferred * TOKENS_PER_DEFERRED_TOOL);
+    // All tools deferred by default (ToolSearch is automatic)
+    const deferredTokens = toolCount * TOKENS_PER_DEFERRED_TOOL;
+    const onFetchTokens = toolCount * TOKENS_PER_FETCHED_TOOL;
 
     servers.push({
       name,
       toolCount,
-      estimatedTokens,
-      isDeferred: deferred > 0,
+      estimatedTokens: deferredTokens,
+      onFetchTokens,
+      isDeferred: true,
     });
   }
 
   const totalTokens = servers.reduce((sum, s) => sum + s.estimatedTokens, 0);
-  const potentialSavings = servers.reduce((sum, s) => {
-    if (!s.isDeferred) {
-      return sum + (s.toolCount * TOKENS_PER_TOOL) - (s.toolCount * TOKENS_PER_DEFERRED_TOOL);
-    }
-    return sum;
-  }, 0);
 
-  return { servers, totalTokens, potentialSavings };
+  return { servers, totalTokens, potentialSavings: 0 };
 }

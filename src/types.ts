@@ -34,7 +34,8 @@ export interface SkillsResult {
 export interface McpServerInfo {
   name: string;
   toolCount: number;
-  estimatedTokens: number;
+  estimatedTokens: number;  // per-turn cost (deferred name-only listing)
+  onFetchTokens: number;    // cost when tools are fetched via ToolSearch
   isDeferred: boolean;
 }
 

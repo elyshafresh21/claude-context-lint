@@ -73,13 +73,17 @@ export function printReport(result: AuditResult, recommendations: Recommendation
   }
 
   // MCP Servers
+  const totalOnFetch = mcp.servers.reduce((s, sv) => s + sv.onFetchTokens, 0);
   console.log('');
   console.log(
     `  ${padRight(`MCP Servers (${mcp.servers.length})`, 24)} ${padRight(fmt(mcp.totalTokens) + ' tokens', 16)} ${bar(mcp.totalTokens / total)} ${severityBadge(mcp.totalTokens, total)}`
   );
+  if (mcp.servers.length > 0) {
+    console.log(chalk.gray(`    Deferred listing (per-turn):    ${fmt(mcp.totalTokens)} tokens`));
+    console.log(chalk.gray(`    Full schemas (when fetched):    ${fmt(totalOnFetch)} tokens`));
+  }
   for (const s of mcp.servers) {
-    const tag = s.isDeferred ? chalk.green(' [deferred]') : chalk.yellow(' [always loaded]');
-    console.log(chalk.gray(`    ${padRight(s.name, 22)} ${padRight(fmt(s.estimatedTokens) + ' tokens', 14)} (${s.toolCount} tools)${tag}`));
+    console.log(chalk.gray(`    ${padRight(s.name, 22)} ${padRight(fmt(s.estimatedTokens) + ' listing', 14)} (${s.toolCount} tools) ${fmt(s.onFetchTokens)} on fetch`));
   }
   if (mcp.servers.length === 0) {
     console.log(chalk.gray('    No MCP servers configured'));

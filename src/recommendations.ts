@@ -4,17 +4,17 @@ export function generateRecommendations(result: AuditResult): Recommendation[] {
   const recs: Recommendation[] = [];
   let priority = 0;
 
-  // MCP: suggest enabling ToolSearch/deferred loading for large servers
-  for (const server of result.mcp.servers) {
-    if (!server.isDeferred && server.toolCount > 5) {
-      const savings = server.toolCount * (300 - 15);
-      recs.push({
-        priority: ++priority,
-        action: `Enable ToolSearch for "${server.name}" MCP (${server.toolCount} tools)`,
-        savings,
-        detail: `Add tool permissions to defer loading. Each tool schema is ~300 tokens; deferred tools cost ~15 tokens each.`,
-      });
-    }
+  // MCP: flag servers with many tools (high on-fetch cost when invoked)
+  const heavyServers = result.mcp.servers.filter(s => s.toolCount > 15).sort((a, b) => b.toolCount - a.toolCount);
+  if (heavyServers.length > 0) {
+    recs.push({
+      priority: ++priority,
+      action: `${heavyServers.length} MCP server${heavyServers.length > 1 ? 's' : ''} with large tool sets`,
+      savings: 0,
+      detail: heavyServers
+        .map(s => `  ${s.name}: ${s.toolCount} tools (${s.onFetchTokens.toLocaleString()} tokens when fetched)`)
+        .join('\n') + '\n  ToolSearch defers these automatically, but each fetch adds to context.',
+    });
   }
 
   // Skills: flag duplicates

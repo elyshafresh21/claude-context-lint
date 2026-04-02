@@ -38,27 +38,29 @@ claude-context-lint
     test-runner                   98 listing      1,950 full
     ... and 29 more
 
-  MCP Servers (3)          14,100 tokens    █████████░░░░░░░░░░░  CRITICAL
-    postgres               6,600 tokens   (22 tools) [always loaded]
-    filesystem             1,800 tokens   (6 tools)  [always loaded]
-    memory                 1,200 tokens   (4 tools)  [always loaded]
+  MCP Servers (3)          480 tokens       ░░░░░░░░░░░░░░░░░░░░  LOW
+    Deferred listing (per-turn):    480 tokens
+    Full schemas (when fetched):    9,600 tokens
+    postgres               330 listing     (22 tools) 6,600 on fetch
+    filesystem              90 listing     (6 tools)  1,800 on fetch
+    memory                  60 listing     (4 tools)  1,200 on fetch
 
-  System Prompt            8,500 tokens     █████░░░░░░░░░░░░░░░ (base overhead)
+  System Prompt            8,500 tokens     ██████████████░░░░░░ (base overhead)
   ────────────────────────────────────────────────────
-  TOTAL OVERHEAD:        28,640 tokens
+  TOTAL OVERHEAD:        14,180 tokens
   Context Limit:         200,000 tokens
-  Used Before Input:     14.3% ████░░░░░░░░░░░░░░░░░░░░░░░░░░
+  Used Before Input:     7.1% ██░░░░░░░░░░░░░░░░░░░░░░░░░░░░
 
   TOP RECOMMENDATIONS
   ────────────────────────────────────────────────────
-  1. Enable ToolSearch for "postgres" MCP (22 tools)
-     −6,270 tokens
-  2. Shorten 12 verbose skill descriptions
+  1. Shorten 12 verbose skill descriptions
      −1,840 tokens
-  3. Consolidate 3 near-duplicate skills
+  2. Consolidate 3 near-duplicate skills
      −420 tokens
+  3. 1 MCP server with large tool set
+     postgres: 22 tools (6,600 tokens when fetched)
 
-  Potential savings: 8,530 tokens (29.8% reduction)
+  Potential savings: 2,260 tokens (15.9% reduction)
 ```
 
 ## What It Scans
@@ -83,7 +85,7 @@ Skills with >75% word overlap in their descriptions are flagged as near-duplicat
 
 ### MCP Tool Estimation
 
-MCP tool schemas average ~300 tokens each. Tools deferred via ToolSearch cost only ~15 tokens (just the name). The tool checks your `settings.json` permissions to detect which tools are deferred vs always-loaded, and estimates overhead accordingly.
+ToolSearch is on by default in Claude Code, so MCP tools are automatically deferred (only names listed in the system prompt, ~15 tokens each). When Claude decides to use a tool, it fetches the full schema on demand (~300 tokens per tool). This tool reports both costs: the per-turn listing overhead and the on-fetch cost when tools are actually invoked.
 
 ## Options
 
@@ -117,14 +119,14 @@ claude-context-lint --json | jq '.percentUsed'
 
 ## Why This Matters
 
-Research shows that heavy Claude Code users can burn **15-30% of their context window** on setup overhead before any conversation begins. Common culprits:
+Claude Code users with many skills can burn **5-15% of their context window** on setup overhead before any conversation begins. Common culprits:
 
-- **MCP servers with all tools always-loaded** instead of deferred via ToolSearch
-- **Verbose skill descriptions** that repeat information
+- **Verbose skill descriptions** that repeat boilerplate in every listing
 - **Near-duplicate skills** with overlapping trigger patterns
 - **Large CLAUDE.md files** that could be compressed
+- **Many MCP servers** adding up in deferred tool listings
 
-This overhead is invisible — Claude Code's `/context` command doesn't break it down. This tool does.
+This overhead is invisible. This tool makes it visible, with specific numbers and actionable recommendations.
 
 ## Attribution
 
