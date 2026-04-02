@@ -1,0 +1,53 @@
+{
+  "name": "claude-context-lint",
+  "version": "0.1.0",
+  "description": "Audit your Claude Code setup and find where tokens are being wasted",
+  "type": "module",
+  "bin": {
+    "claude-context-lint": "./dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "prepublishOnly": "tsc"
+  },
+  "keywords": [
+    "claude",
+    "claude-code",
+    "context-window",
+    "token-optimization",
+    "linter",
+    "cli",
+    "mcp",
+    "skills",
+    "anthropic",
+    "ai-tools"
+  ],
+  "author": "Claude Code <noreply@anthropic.com>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/skibidiskib/claude-context-lint.git"
+  },
+  "homepage": "https://github.com/skibidiskib/claude-context-lint#readme",
+  "bugs": {
+    "url": "https://github.com/skibidiskib/claude-context-lint/issues"
+  },
+  "dependencies": {
+    "chalk": "^5.3.0",
+    "commander": "^12.1.0",
+    "fast-glob": "^3.3.2"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.0",
+    "typescript": "^5.5.0"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "files": [
+    "dist",
+    "LICENSE",
+    "README.md"
+  ]
+}
